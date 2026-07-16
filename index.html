@@ -43,8 +43,8 @@
   .urlbox { margin-top:12px; font-size:.78rem; word-break:break-all;
     color:var(--muted); font-family:ui-monospace,Menlo,monospace; }
   .urlbox a { color:var(--muted); }
-  iframe { width:100%; height:78vh; border:1px solid var(--line); border-radius:12px;
-    margin-top:16px; background:#fff; }
+  #result { display:flex; gap:10px; margin-top:14px; }
+  .result-btn { flex:1; text-align:center; text-decoration:none; }
   .note { margin-top:16px; font-size:.78rem; color:var(--muted); }
   @media (max-width:560px) {
     .fields { grid-template-columns:1fr; }
@@ -79,8 +79,11 @@
     </div>
 
     <div id="status" class="status">Select district, constituency and part number.</div>
+    <div id="result" style="display:none">
+      <a id="openLink" class="btn-primary result-btn" target="_blank" rel="noopener">Open PDF</a>
+      <a id="dlLink" class="btn-ghost result-btn">Download</a>
+    </div>
     <div id="urlBox" class="urlbox" style="display:none"></div>
-    <iframe id="viewer" title="Electoral roll PDF" style="display:none"></iframe>
   </div>
 
   <p class="note">Unofficial viewer. PDFs are fetched directly from the Chief Electoral Officer,
@@ -138,7 +141,9 @@ const openBtn = document.getElementById('openBtn');
 const copyBtn = document.getElementById('copyBtn');
 const urlBox = document.getElementById('urlBox');
 const statusEl = document.getElementById('status');
-const viewer = document.getElementById('viewer');
+const result = document.getElementById('result');
+const openLink = document.getElementById('openLink');
+const dlLink = document.getElementById('dlLink');
 
 const districts = [...new Set(voterMaster.map(v => v.district))].sort();
 districts.forEach(d => {
@@ -200,6 +205,7 @@ function currentUrl() {
 function buildUrl() {
   const url = currentUrl();
   statusEl.className = 'status';
+  result.style.display = 'none';
   if (url) {
     urlBox.style.display = 'block';
     urlBox.innerHTML = `<a href="${url}" target="_blank">${url}</a>`;
@@ -219,21 +225,26 @@ openBtn.onclick = async () => {
   fetching = true;
   openBtn.disabled = true;
   openBtn.textContent = 'Loading…';
-  viewer.style.display = 'none';
+  result.style.display = 'none';
+  if (window._blobUrl) { URL.revokeObjectURL(window._blobUrl); window._blobUrl = null; }
 
   const CONCURRENCY = 8, MAX_TRIES = 200;
   let done = false, tries = 0;
   const t0 = performance.now();
+  const fileName = url.split('/').pop();
 
-  const render = (blob, n) => {
+  const render = (blob) => {
     const blobUrl = URL.createObjectURL(blob);
-    viewer.src = blobUrl;
-    viewer.style.display = 'block';
+    window._blobUrl = blobUrl;
+    openLink.href = blobUrl;
+    dlLink.href = blobUrl;
+    dlLink.download = fileName;
+    result.style.display = 'flex';
     const secs = ((performance.now() - t0) / 1000).toFixed(1);
     statusEl.className = 'status done';
-    statusEl.innerHTML = `Loaded in ${secs}s. `
-      + `<a href="${blobUrl}" download="${url.split('/').pop()}">Download</a> · `
-      + `<a href="${blobUrl}" target="_blank">Open in new tab</a>`;
+    statusEl.textContent = `Ready in ${secs}s — opening the PDF…`;
+    // Auto-open in a new tab; if the browser blocks it, the buttons above remain.
+    window.open(blobUrl, '_blank');
   };
 
   const worker = async () => {
@@ -245,7 +256,7 @@ openBtn.onclick = async () => {
         const res = await fetch(url, { cache: 'no-store' });
         if (res.ok) {
           const blob = await res.blob();
-          if (!done) { done = true; render(blob, n); }
+          if (!done) { done = true; render(blob); }
           return;
         }
       } catch (e) { /* retry */ }

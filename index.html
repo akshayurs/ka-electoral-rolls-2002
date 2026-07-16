@@ -45,7 +45,12 @@
   .urlbox a { color:var(--muted); }
   #result { display:flex; gap:10px; margin-top:14px; }
   .result-btn { flex:1; text-align:center; text-decoration:none; }
-  .note { margin-top:16px; font-size:.78rem; color:var(--muted); }
+  .disclaimer { margin-top:18px; font-size:.8rem; color:var(--muted);
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .disclaimer strong { color:var(--ink); }
+  .disclaimer p { margin:0 0 8px; }
+  .disclaimer p:last-child { margin:0; }
+  .disclaimer a { color:var(--accent-dark); font-weight:600; }
   @media (max-width:560px) {
     .fields { grid-template-columns:1fr; }
     .actions { flex-direction:column; }
@@ -86,8 +91,18 @@
     <div id="urlBox" class="urlbox" style="display:none"></div>
   </div>
 
-  <p class="note">Unofficial viewer. PDFs are fetched directly from the Chief Electoral Officer,
-  Karnataka (ceo.karnataka.gov.in), whose server is often busy — this page keeps retrying until the file loads.</p>
+  <div class="disclaimer">
+    <p><strong>Unofficial tool.</strong> This is a personal helper, not affiliated with,
+    operated by, or endorsed by the Chief Electoral Officer, Karnataka, the Election Commission,
+    or any government body.</p>
+    <p>It hosts and stores no data. Every PDF is fetched directly from, and belongs to, the official site.
+    The official page is here:
+    <a href="https://ceo.karnataka.gov.in/voter_list.html" target="_blank" rel="noopener">ceo.karnataka.gov.in/voter_list.html</a>.</p>
+    <p><strong>No guarantees.</strong> The government server is frequently overloaded and this page simply
+    retries a normal file request until one succeeds — it may be slow, fail, or stop working entirely
+    if the source site changes. Please use it responsibly for personal lookups only. Provided “as is”,
+    with no warranty of any kind.</p>
+  </div>
 </div>
 
 <script>
